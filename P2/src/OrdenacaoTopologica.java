@@ -8,47 +8,6 @@ public class OrdenacaoTopologica<T> {
         this.g = g;
     }
 
-    public int calcularTempoMinimo() {
-        var tarefas = encontrarTarefasConcorrentes(this.g);
-        var tempoMinimo = 0;
-        for (var tarefa : tarefas) {
-            // O tempo mínimo de cada "lote" de tarefas é o tempo da sub-tarefa mais demorada
-            var max = tarefa.stream().mapToInt(Vertice::getTempo).max().orElseThrow();
-            tempoMinimo += max;
-        }
-        return tempoMinimo;
-    }
-
-    public List<Vertice<T>> kahns() {
-        var grafo = new Grafo<>(this.g);
-        // Lista que conterá o resultado (os elementos ordenados)
-        List<Vertice<T>> L = new ArrayList<>();
-        // Todos os nós sem arestas de entrada
-        List<Vertice<T>> S = new ArrayList<>(buscarVerticesSemArestasEntrada());
-
-        while (!S.isEmpty()) {
-            var verticeEscolhido = S.remove(0);
-            L.add(verticeEscolhido);
-
-            // Pega as arestas de saída de n
-            List<Vertice<T>> saidasVerticeEscolhido = List.copyOf(grafo.getArestasSaida(verticeEscolhido));
-
-            for (var m : saidasVerticeEscolhido) {
-//                saidasVerticeEscolhido.remove(0);
-                grafo.removerAresta(verticeEscolhido, m);
-                boolean temArestaDeEntrada = grafo.getGrauEntrada(m) > 0;
-                if (!temArestaDeEntrada) {
-                    S.add(m);
-                }
-            }
-        }
-
-        if (grafo.nArestas() > 0) {
-            throw new RuntimeException("O grafo possui ciclos");
-        }
-        return this.L = L;
-    }
-
     public int minTimeForTasks() {
         var distancia = new HashMap<Vertice<T>, Integer>();
         for(var node : this.g.getVertices()) {
@@ -77,27 +36,34 @@ public class OrdenacaoTopologica<T> {
         return distancia.get(v);
     }
 
-    // Beseado no algoritmo de Kahn
-    private ArrayList<ArrayList<Vertice<T>>> encontrarTarefasConcorrentes(Grafo<T> g) {
-        var trabalhosSimultaneos = new ArrayList<ArrayList<Vertice<T>>>();
-        var in = buscarArestasEntrada();
-        while(!g.isEmpty()) {
-            // A cada iteração os vértices sem aresta de entrada irão mudar.
-            var verticesSemArestasDeEntrada = in.entrySet().stream().filter(entry -> entry.getValue().equals(0)).map(Map.Entry::getKey).toList();
-            // Adiciona todos os vértices sem aresta de entrada na lista de trabalhos simultâneos
-            trabalhosSimultaneos.add(new ArrayList<>(verticesSemArestasDeEntrada));
-//            for(var node : verticesSemArestasDeEntrada) {
-//                g.removerVertice(node.getKey());
-//            }
-            for(var v : verticesSemArestasDeEntrada) {
-                var adjacentes = this.g.getAdjacentes(v);
-                for(var adj : adjacentes) {
-                    in.put(adj, in.get(adj) - 1);
+    /** Faz a ordenação topológica do grafo */
+    public List<Vertice<T>> kahns() {
+        var grafo = new Grafo<>(this.g);
+        // Lista que conterá o resultado (os elementos ordenados)
+        List<Vertice<T>> L = new ArrayList<>();
+        // Todos os vértices sem arestas de entrada
+        List<Vertice<T>> S = new ArrayList<>(buscarVerticesSemArestasEntrada());
+
+        while (!S.isEmpty()) {
+            var verticeEscolhido = S.remove(0);
+            L.add(verticeEscolhido);
+
+            // Pega as arestas de saída de n
+            List<Vertice<T>> saidasVerticeEscolhido = List.copyOf(grafo.getArestasSaida(verticeEscolhido));
+
+            for (var m : saidasVerticeEscolhido) {
+                grafo.removerAresta(verticeEscolhido, m);
+                boolean temArestaDeEntrada = grafo.getGrauEntrada(m) > 0;
+                if (!temArestaDeEntrada) {
+                    S.add(m);
                 }
-                in.remove(v);
             }
         }
-        return trabalhosSimultaneos;
+
+        if (grafo.nArestas() > 0) {
+            throw new RuntimeException("O grafo possui ciclos");
+        }
+        return this.L = L;
     }
 
     private List<Vertice<T>> buscarVerticesSemArestasEntrada() {
@@ -110,14 +76,49 @@ public class OrdenacaoTopologica<T> {
         return res;
     }
 
-    private Map<Vertice<T>, Integer> buscarArestasEntrada() {
-        var entradas = new HashMap<Vertice<T>, Integer>();
-        for(var vertice : this.g.getVertices()) {
-            int grau = this.g.getGrauEntrada(vertice);
-            entradas.put(vertice, grau);
-        }
-        return entradas;
-    }
+//     public int calcularTempoMinimo() {
+//        var tarefas = encontrarTarefasConcorrentes(this.g);
+//        var tempoMinimo = 0;
+//        for (var tarefa : tarefas) {
+//            // O tempo mínimo de cada "lote" de tarefas é o tempo da sub-tarefa mais demorada
+//            var max = tarefa.stream().mapToInt(Vertice::getTempo).max().orElseThrow();
+//            tempoMinimo += max;
+//        }
+//        return tempoMinimo;
+//    }
+//
+//    // Beseado no algoritmo de Kahn
+//    private ArrayList<ArrayList<Vertice<T>>> encontrarTarefasConcorrentes(Grafo<T> g) {
+//        var trabalhosSimultaneos = new ArrayList<ArrayList<Vertice<T>>>();
+//        var in = buscarArestasEntrada();
+//        while(!g.isEmpty()) {
+//            // A cada iteração os vértices sem aresta de entrada irão mudar.
+//            var verticesSemArestasDeEntrada = in.entrySet().stream().filter(entry -> entry.getValue().equals(0)).map(Map.Entry::getKey).toList();
+//            // Adiciona todos os vértices sem aresta de entrada na lista de trabalhos simultâneos
+//            trabalhosSimultaneos.add(new ArrayList<>(verticesSemArestasDeEntrada));
+////            for(var node : verticesSemArestasDeEntrada) {
+////                g.removerVertice(node.getKey());
+////            }
+//            for(var v : verticesSemArestasDeEntrada) {
+//                var adjacentes = this.g.getAdjacentes(v);
+//                for(var adj : adjacentes) {
+//                    in.put(adj, in.get(adj) - 1);
+//                }
+//                in.remove(v);
+//            }
+//        }
+//        return trabalhosSimultaneos;
+
+//    }
+
+//    private Map<Vertice<T>, Integer> buscarArestasEntrada() {
+//        var entradas = new HashMap<Vertice<T>, Integer>();
+//        for(var vertice : this.g.getVertices()) {
+//            int grau = this.g.getGrauEntrada(vertice);
+//            entradas.put(vertice, grau);
+//        }
+//        return entradas;
+//    }
 
     public void printOrdenacao() {
         System.out.println("Ordenação Topológica: ");
