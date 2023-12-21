@@ -1,15 +1,50 @@
 import java.util.*;
 
-public class OrdenacaoTopologica<T> {
+public class Solucao<T> {
     private final Grafo<T> g;
     private List<Vertice<T>> L;
 
-    OrdenacaoTopologica(Grafo<T> g) {
+    Solucao(Grafo<T> g) {
         this.g = g;
     }
 
-    public int minTimeForTasks() {
+   public void printTemposFolga(int maxDist) {
+        var tempoMaximoTermino = new HashMap<Vertice<T>, Integer>();
+
+        for (Vertice<T> v : this.L) {
+            // Tempo maximo onde a tarefa pode ser iniciada sem prejudicar o tempo global
+            int inicioMaximo = maxDist - this.temposCadeiaTarefa.get(v);
+            // Tempo maximo onde a tarefa pode ser terminada
+            int terminoMaximo = inicioMaximo + v.getTempo();
+
+            tempoMaximoTermino.put(v, terminoMaximo);
+        }
+
+        System.out.println("Tarefas que não podem sofrer qualquer atraso:");
+        for (var tarefa : this.L) {
+            // Tempo da tarefa == Tempo maximo de termino.
+            if (tarefa.getTempo() == tempoMaximoTermino.get(tarefa)) {
+                System.out.println("- " + tarefa.getValor());
+            }
+        }
+
+        System.out.println("\nTarefas que podem sofrer atrasos:");
+        for (var tarefa : this.L) {
+            if ((tarefa.getTempo() != tempoMaximoTermino.get(tarefa))) {
+                System.out.println("- " + tarefa.getValor());
+            }
+        }
+
+        System.out.println("\nTempo máximo de atraso de cada tarefa:");
+        for (var tarefa : this.L) {
+            int atrasoMaximo = tempoMaximoTermino.get(tarefa) - tarefa.getTempo();
+            System.out.println("- " + tarefa.getValor() + ": " + atrasoMaximo + "m");
+        }
+    }
+
+    public int tempoMinimoParaTarefas() {
         var distancia = new HashMap<Vertice<T>, Integer>();
+
         for(var node : this.g.getVertices()) {
             distancia.put(node, Integer.MIN_VALUE);
         }
@@ -20,6 +55,8 @@ public class OrdenacaoTopologica<T> {
                 maxDist = Math.max(maxDist, maiorCaminho(distancia, v));
             }
         }
+
+        this.temposCadeiaTarefa = distancia;
         return maxDist;
     }
 
@@ -32,7 +69,7 @@ public class OrdenacaoTopologica<T> {
             maxDist = Math.max(maxDist, distancia.get(w));
         }
         distancia.put(v, maxDist + v.getTempo());
-        System.out.println("Distancia de " + v + " = " + distancia.get(v) + "\n----------");
+//        System.out.println("Distancia de " + v + " = " + distancia.get(v) + "\n----------");
         return distancia.get(v);
     }
 
@@ -177,11 +214,11 @@ public class OrdenacaoTopologica<T> {
 
 //        System.out.println(g);
 
-        var OTP = new OrdenacaoTopologica<>(g);
-        var ordenado = OTP.kahns();
-//        OTP.printOrdenacao();
-        var tempo = OTP.minTimeForTasks();
-        System.out.println("Tempo mínimo: " + tempo + "m");
+        var OTP = new Solucao<>(g);
+        OTP.kahns();
+        OTP.printOrdenacao();
+        var tempo = OTP.tempoMinimoParaTarefas();
+        System.out.println("\nTempo mínimo para realizar as tarefas: " + tempo + "m");
+        OTP.printTemposFolga(tempo);
     }
-
 }
